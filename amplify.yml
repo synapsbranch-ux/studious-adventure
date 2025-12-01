@@ -4,8 +4,6 @@ backend:
     build:
       commands:
         - npm ci --cache .npm --prefer-offline
-        # Install amplify directory dependencies for TypeScript validation
-        - cd amplify && npm install && cd ..
         # Install Lambda function dependencies
         - cd amplify/functions/contact && npm install && cd ../../..
         # Deploy backend using full package name to avoid npx resolution issues
@@ -22,5 +20,4 @@ frontend:
   cache:
     paths:
       - .npm/**/*
-      - amplify/node_modules/**/*
       - amplify/functions/contact/node_modules/**/*
