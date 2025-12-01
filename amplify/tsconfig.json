@@ -8,14 +8,7 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
-      "@aws-amplify/backend": [
-        "../node_modules/@aws-amplify/backend"
-      ],
-      "@aws-amplify/backend/*": [
-        "../node_modules/@aws-amplify/backend/*"
-      ],
       "$amplify/*": [
         "../.amplify/generated/*"
       ]

@@ -4,6 +4,8 @@ backend:
     build:
       commands:
         - npm ci --cache .npm --prefer-offline
+        # Create symbolic link for amplify to access parent node_modules
+        - ln -sf ../node_modules amplify/node_modules
         # Install Lambda function dependencies
         - cd amplify/functions/contact && npm install && cd ../../..
         # Deploy backend using full package name to avoid npx resolution issues
