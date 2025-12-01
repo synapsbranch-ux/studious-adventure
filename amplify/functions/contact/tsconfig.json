@@ -1,0 +1,15 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "moduleResolution": "node",
+        "baseUrl": ".",
+        "paths": {
+            "@aws-amplify/backend": [
+                "../../../node_modules/@aws-amplify/backend"
+            ],
+            "@aws-amplify/backend/*": [
+                "../../../node_modules/@aws-amplify/backend/*"
+            ]
+        }
+    }
+}
