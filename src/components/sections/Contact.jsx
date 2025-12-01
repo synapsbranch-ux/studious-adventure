@@ -1,8 +1,11 @@
-// src/components/sections/Contact.jsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import PropTypes from 'prop-types';
 import { MapPin, Phone, Mail, Send, Check } from 'lucide-react';
+
+// --- AMPLIFY GEN 2 INTEGRATION ---
+import { generateClient } from 'aws-amplify/data';
+// Note: On n'initialise plus le client ici pour éviter l'erreur de configuration "hoisting"
 
 // Composants
 import Section from '../ui/Section';
@@ -10,8 +13,6 @@ import Button from '../ui/Button';
 
 // Utilitaires
 import { isValidEmail, isValidHaitianPhone } from '../../utils/helpers';
-// Import du hook pour le service d'email
-import { useEmailService } from '../../hooks/useEmailService';
 
 const ContactInfo = ({ icon: Icon, title, content, link, linkType }) => {
   let linkProps = {};
@@ -65,9 +66,9 @@ ContactInfo.propTypes = {
 };
 
 const Contact = () => {
-  // Utilisation du hook pour le service d'email
-  const { sendEmail } = useEmailService();
-  
+  // Initialisation du client API à l'intérieur du composant pour garantir qu'Amplify est configuré
+  const client = generateClient();
+
   // État du formulaire
   const [formData, setFormData] = useState({
     name: '',
@@ -147,8 +148,25 @@ const Contact = () => {
     setSubmitError(null);
     
     try {
-      // Envoyer le message via l'API
-      await sendEmail(formData, true); // Le second paramètre true active l'envoi d'un email de confirmation
+      // --- APPEL API AMPLIFY GEN 2 ---
+      const { data, errors } = await client.mutations.envoyerContact({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message
+      });
+
+      // Gestion des erreurs GraphQL/Reseau
+      if (errors) {
+        console.error('Erreurs GraphQL:', errors);
+        throw new Error("Une erreur de communication est survenue.");
+      }
+
+      // Gestion des erreurs logiques renvoyées par la fonction Lambda
+      // Note: Avec a.json(), data est l'objet JSON retourné par la lambda
+      if (data && !data.success) {
+        throw new Error(data.message || "Erreur lors de l'envoi du message");
+      }
       
       // Succès
       setIsSubmitted(true);

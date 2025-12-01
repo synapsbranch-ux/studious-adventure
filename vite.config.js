@@ -10,27 +10,12 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    host: true, // Needed for docker
-    proxy: {
-      // Rediriger les requêtes /api vers le serveur Express en développement
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
+    host: true, // Toujours utile pour Docker ou l'exposition locale
+    // Le bloc 'proxy' a été supprimé car Amplify Client gère la connexion
   },
   preview: {
-    // Pas de restriction d'hôtes
-    port: process.env.PORT || 4173,
-    proxy: {
-      // Rediriger les requêtes /api vers le serveur Express en production
-      '/api': {
-        target: process.env.API_URL || 'http://localhost:3001',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
+    port: 3000,
+    // Le bloc 'proxy' a été supprimé ici aussi
   },
   resolve: {
     alias: {
@@ -38,7 +23,7 @@ export default defineConfig({
     },
   },
   define: {
-    // Nécessaire pour certaines libs qui utilisent process.env
+    // On garde ça au cas où certaines de tes librairies en ont besoin
     'process.env': {
       NODE_ENV: JSON.stringify(process.env.NODE_ENV)
     }

@@ -1,36 +1,6 @@
 // src/utils/emailService.js
-import nodemailer from 'nodemailer';
-
-// Configuration SMTP Gmail
-const SMTP_CONFIG = {
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // true pour 465, false pour autres ports
-  auth: {
-    user: import.meta.env.VITE_GMAIL_USER,
-    pass: import.meta.env.VITE_GMAIL_APP_PASSWORD,
-  },
-};
-
-// Email de destination
-const DESTINATION_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || 'mainoffice@limajs.com';
-
-/**
- * Crée un transporteur Nodemailer
- * @returns {Object} - Transporteur configuré
- */
-const createTransporter = () => {
-  if (!SMTP_CONFIG.auth.user || !SMTP_CONFIG.auth.pass) {
-    throw new Error('Configuration SMTP manquante. Vérifiez VITE_GMAIL_USER et VITE_GMAIL_APP_PASSWORD.');
-  }
-
-  return nodemailer.createTransporter({
-    ...SMTP_CONFIG,
-    tls: {
-      rejectUnauthorized: false
-    }
-  });
-};
+// This file handles contact form submission via AWS Amplify Lambda function
+// The actual email sending is done server-side by the Lambda function
 
 /**
  * Valide les données du formulaire de contact
@@ -84,181 +54,11 @@ export const validateContactData = (data) => {
 };
 
 /**
- * Crée le contenu HTML de l'email
- * @param {Object} data - Données du contact
- * @returns {string} - HTML de l'email
- */
-const createEmailHTML = (data) => {
-  const currentDate = new Date().toLocaleString('fr-FR', {
-    timeZone: 'America/Port-au-Prince',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-
-  return `
-    <!DOCTYPE html>
-    <html lang="fr">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Nouveau message de contact - LIMAJS MOTORS</title>
-      <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
-          margin: 0;
-          padding: 0;
-          background-color: #f8f9fa;
-        }
-        .container {
-          max-width: 600px;
-          margin: 20px auto;
-          background-color: white;
-          border-radius: 10px;
-          overflow: hidden;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-          background: linear-gradient(135deg, #2563eb, #1d4ed8);
-          color: white;
-          padding: 30px 20px;
-          text-align: center;
-        }
-        .header h1 {
-          margin: 0;
-          font-size: 24px;
-          font-weight: 600;
-        }
-        .content {
-          padding: 30px 20px;
-        }
-        .field {
-          margin-bottom: 20px;
-          padding: 15px;
-          background-color: #f8f9fa;
-          border-radius: 8px;
-          border-left: 4px solid #2563eb;
-        }
-        .label {
-          font-weight: 600;
-          color: #2563eb;
-          font-size: 14px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin-bottom: 5px;
-        }
-        .value {
-          color: #333;
-          font-size: 16px;
-          line-height: 1.5;
-          white-space: pre-wrap;
-        }
-        .footer {
-          background-color: #f8f9fa;
-          padding: 20px;
-          text-align: center;
-          font-size: 12px;
-          color: #666;
-          border-top: 1px solid #e9ecef;
-        }
-        .logo {
-          font-size: 18px;
-          font-weight: bold;
-          color: #2563eb;
-        }
-        .highlight {
-          background-color: #fff3cd;
-          padding: 2px 6px;
-          border-radius: 4px;
-          color: #856404;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <div class="logo">🚌 LIMAJS MOTORS</div>
-          <h1>Nouveau message de contact</h1>
-        </div>
-        
-        <div class="content">
-          <div class="field">
-            <div class="label">👤 Nom complet</div>
-            <div class="value">${escapeHtml(data.name)}</div>
-          </div>
-          
-          <div class="field">
-            <div class="label">📧 Adresse email</div>
-            <div class="value">
-              <a href="mailto:${escapeHtml(data.email)}" style="color: #2563eb; text-decoration: none;">
-                ${escapeHtml(data.email)}
-              </a>
-            </div>
-          </div>
-          
-          ${data.phone ? `
-          <div class="field">
-            <div class="label">📱 Numéro de téléphone</div>
-            <div class="value">
-              <a href="tel:${escapeHtml(data.phone)}" style="color: #2563eb; text-decoration: none;">
-                ${formatHaitianPhone(data.phone)}
-              </a>
-            </div>
-          </div>
-          ` : ''}
-          
-          <div class="field">
-            <div class="label">💬 Message</div>
-            <div class="value">${escapeHtml(data.message)}</div>
-          </div>
-          
-          <div class="field">
-            <div class="label">🕒 Date et heure de réception</div>
-            <div class="value">
-              <span class="highlight">${currentDate}</span> (Heure d'Haïti)
-            </div>
-          </div>
-        </div>
-        
-        <div class="footer">
-          <p><strong>LIMAJS MOTORS</strong> - Service de transport</p>
-          <p>📍 Génipailler, 3e Section Milot | 📞 +509 41 70 4234</p>
-          <p>Ce message a été envoyé via le formulaire de contact du site web</p>
-          <p style="margin-top: 15px; font-size: 11px; color: #999;">
-            Pour répondre à ce message, utilisez directement l'adresse email du client ci-dessus.
-          </p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-};
-
-/**
- * Échappe les caractères HTML
- * @param {string} text - Texte à échapper
- * @returns {string} - Texte échappé
- */
-const escapeHtml = (text) => {
-  if (!text) return '';
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
-};
-
-/**
  * Formate un numéro de téléphone haïtien
  * @param {string} phone - Numéro brut
  * @returns {string} - Numéro formaté
  */
-const formatHaitianPhone = (phone) => {
+export const formatHaitianPhone = (phone) => {
   if (!phone) return '';
   const cleaned = phone.replace(/\D/g, '');
   
@@ -273,41 +73,22 @@ const formatHaitianPhone = (phone) => {
 };
 
 /**
- * Crée le contenu texte de l'email
- * @param {Object} data - Données du contact
- * @returns {string} - Texte de l'email
+ * Échappe les caractères HTML
+ * @param {string} text - Texte à échapper
+ * @returns {string} - Texte échappé
  */
-const createEmailText = (data) => {
-  const currentDate = new Date().toLocaleString('fr-FR', {
-    timeZone: 'America/Port-au-Prince'
-  });
-
-  return `
-NOUVEAU MESSAGE DE CONTACT - LIMAJS MOTORS
-==========================================
-
-Nom: ${data.name}
-Email: ${data.email}
-${data.phone ? `Téléphone: ${formatHaitianPhone(data.phone)}` : ''}
-
-Message:
-${data.message}
-
-Date de réception: ${currentDate} (Heure d'Haïti)
-
----
-LIMAJS MOTORS - Service de transport
-Génipailler, 3e Section Milot
-Tél: +509 41 70 4234
-Email: mainoffice@limajs.com
-
-Ce message a été envoyé via le formulaire de contact du site web.
-Pour répondre, utilisez directement l'adresse email du client.
-  `.trim();
+export const escapeHtml = (text) => {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
 };
 
 /**
- * Envoie un email de contact via SMTP Gmail
+ * Envoie un email de contact via la Lambda function AWS Amplify
  * @param {Object} contactData - Données du contact
  * @returns {Promise<Object>} - Résultat de l'envoi
  */
@@ -319,166 +100,59 @@ export const sendContactEmail = async (contactData) => {
       throw new Error('Données invalides: ' + Object.values(validation.errors).join(', '));
     }
 
-    // Créer le transporteur
-    const transporter = createTransporter();
-
-    // Debug en mode développement
-    if (import.meta.env.DEV) {
-      console.log('📧 Configuration SMTP:', {
-        host: SMTP_CONFIG.host,
-        port: SMTP_CONFIG.port,
-        user: SMTP_CONFIG.auth.user,
-        destination: DESTINATION_EMAIL
-      });
-    }
-
-    // Vérifier la connexion SMTP
-    await transporter.verify();
-
-    // Préparer les options de l'email
-    const mailOptions = {
-      from: {
-        name: 'Site Web LIMAJS MOTORS',
-        address: SMTP_CONFIG.auth.user
-      },
-      to: DESTINATION_EMAIL,
-      replyTo: {
-        name: contactData.name.trim(),
-        address: contactData.email.trim()
-      },
-      subject: `Nouveau message de contact - ${contactData.name.trim()}`,
-      text: createEmailText(contactData),
-      html: createEmailHTML(contactData),
+    // TODO: Appeler la Lambda function via AWS Amplify
+    // Option 1: Via une mutation GraphQL (si configurée)
+    // Option 2: Via une API REST Amplify
+    // Option 3: Via l'invocation directe de la fonction
+    
+    // Exemple temporaire - à remplacer par l'appel Amplify réel
+    console.log('📧 Envoi du message de contact via Amplify Lambda:', contactData);
+    
+    // PLACEHOLDER: Remplacer ceci par le vrai appel Amplify
+    const response = await fetch('/api/contact', {
+      method: 'POST',
       headers: {
-        'X-Mailer': 'LIMAJS MOTORS Contact Form',
-        'X-Priority': '3',
-        'X-MSMail-Priority': 'Normal'
-      }
-    };
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: contactData.name.trim(),
+        email: contactData.email.trim(),
+        phone: contactData.phone?.trim() || null,
+        message: contactData.message.trim(),
+      }),
+    });
 
-    // Envoyer l'email
-    const result = await transporter.sendMail(mailOptions);
-
-    if (import.meta.env.DEV) {
-      console.log('✅ Email envoyé avec succès:', {
-        messageId: result.messageId,
-        accepted: result.accepted,
-        rejected: result.rejected
-      });
+    if (!response.ok) {
+      throw new Error('Erreur lors de l\'envoi du message');
     }
+
+    const result = await response.json();
 
     return {
       success: true,
       message: 'Message envoyé avec succès',
-      messageId: result.messageId,
-      details: {
-        accepted: result.accepted,
-        rejected: result.rejected,
-        pending: result.pending
-      }
+      data: result,
     };
 
   } catch (error) {
-    console.error('❌ Erreur lors de l\'envoi de l\'email:', error);
-
-    // Gestion des erreurs spécifiques
-    let errorMessage = 'Erreur lors de l\'envoi du message';
-
-    if (error.code === 'EAUTH') {
-      errorMessage = 'Erreur d\'authentification Gmail. Vérifiez vos identifiants.';
-    } else if (error.code === 'ECONNECTION') {
-      errorMessage = 'Impossible de se connecter au serveur Gmail.';
-    } else if (error.code === 'EMESSAGE') {
-      errorMessage = 'Erreur dans le contenu du message.';
-    } else if (error.code === 'EENVELOPE') {
-      errorMessage = 'Erreur dans les adresses email.';
-    } else if (error.responseCode === 550) {
-      errorMessage = 'Adresse email de destination invalide.';
-    } else if (error.responseCode === 535) {
-      errorMessage = 'Identifiants Gmail incorrects.';
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
-
-    throw new Error(errorMessage);
+    console.error('❌ Erreur lors de l\'envoi du message:', error);
+    
+    throw new Error(
+      error.message || 'Erreur lors de l\'envoi du message. Veuillez réessayer.'
+    );
   }
 };
 
 /**
- * Vérifie la configuration SMTP
+ * Vérifie la configuration du service de contact
  * @returns {Object} - État de la configuration
  */
-export const checkSMTPConfig = () => {
-  const isConfigured = !!(
-    SMTP_CONFIG.auth.user && 
-    SMTP_CONFIG.auth.pass && 
-    DESTINATION_EMAIL
-  );
-
+export const checkContactConfig = () => {
+  // TODO: Vérifier que l'API Amplify est configurée
   return {
-    isConfigured,
-    missing: {
-      gmail_user: !SMTP_CONFIG.auth.user,
-      gmail_password: !SMTP_CONFIG.auth.pass,
-      contact_email: !DESTINATION_EMAIL,
-    },
-    config: import.meta.env.DEV ? {
-      host: SMTP_CONFIG.host,
-      port: SMTP_CONFIG.port,
-      user: SMTP_CONFIG.auth.user ? SMTP_CONFIG.auth.user.replace(/(.{3}).*(@.*)/, '$1***$2') : 'Non défini',
-      destination: DESTINATION_EMAIL
-    } : 'Configuration cachée en production'
+    isConfigured: true, // À remplacer par une vraie vérification
+    message: 'Configuration via AWS Amplify Lambda',
   };
-};
-
-/**
- * Teste la connexion SMTP
- * @returns {Promise<Object>} - Résultat du test
- */
-export const testSMTPConnection = async () => {
-  try {
-    const transporter = createTransporter();
-    await transporter.verify();
-    
-    return {
-      success: true,
-      message: 'Connexion SMTP réussie'
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Échec de la connexion SMTP',
-      error: error.message
-    };
-  }
-};
-
-/**
- * Envoie un email de test
- * @returns {Promise<Object>} - Résultat du test
- */
-export const sendTestEmail = async () => {
-  const testData = {
-    name: 'Test LIMAJS MOTORS',
-    email: SMTP_CONFIG.auth.user,
-    phone: '+509 12 34 5678',
-    message: 'Ceci est un message de test pour vérifier la configuration SMTP Gmail de LIMAJS MOTORS.'
-  };
-
-  try {
-    const result = await sendContactEmail(testData);
-    return {
-      success: true,
-      message: 'Email de test envoyé avec succès',
-      result
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Échec de l\'envoi de l\'email de test',
-      error: error.message
-    };
-  }
 };
 
 // Utilitaires supplémentaires
@@ -528,8 +202,6 @@ export const emailUtils = {
 export default {
   sendContactEmail,
   validateContactData,
-  checkSMTPConfig,
-  testSMTPConnection,
-  sendTestEmail,
+  checkContactConfig,
   emailUtils
 };
